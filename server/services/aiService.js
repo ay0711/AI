@@ -6,7 +6,7 @@ class AIService {
       throw new Error("GOOGLE_AI_API_KEY environment variable is required");
     }
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-    this.validModels = ["gemini-1.5-flash", "gemini-1.5-pro"];
+    this.validModels = ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest"];
   }
 
   // Helper function for delays
@@ -20,7 +20,7 @@ class AIService {
   }
 
   // Generate content with retry logic
-  async generateContent(contents, model = "gemini-1.5-flash", maxRetries = 3) {
+  async generateContent(contents, model = "gemini-1.5-flash-latest", maxRetries = 3) {
     if (!this.isValidModel(model)) {
       throw new Error(`Invalid model. Supported models: ${this.validModels.join(", ")}`);
     }

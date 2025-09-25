@@ -5,7 +5,7 @@ const aiService = new AIService();
 
 const generateContent = async (req, res) => {
   try {
-    const { contents, model = 'gemini-1.5-flash' } = req.body;
+    const { contents, model = 'gemini-1.5-flash-latest' } = req.body;
     
     // Use the AI service with integrated retry logic
     const result = await aiService.generateContent(contents, model);
