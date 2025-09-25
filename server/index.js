@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 // CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com'] // Update with your frontend domain
+    ? ['https://ai-ten-alpha-19.vercel.app', 'https://ai-k0yd.onrender.com'] // Your deployed frontend and backend
     : ['http://localhost:5173', 'http://localhost:3000'], // Allow local development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],

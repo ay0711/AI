@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configure API URL based on environment
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-domain.com/api/ai'  // Update with your production backend URL
+  ? 'https://ai-k0yd.onrender.com/api/ai'  // Your deployed backend
   : 'http://localhost:5000/api/ai';
 
 const generateContent = async (contents, model = 'gemini-1.5-flash') => {
