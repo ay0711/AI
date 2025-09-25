@@ -22,8 +22,10 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [theme, setCurrentTheme] = useState(getTheme());
-  const selectedModel = 'gemini-2.5-flash';
+  const selectedModel = 'gemini-2.5-flash'; // Updated to valid model name
   const [charCount, setCharCount] = useState(0);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingResponse, setStreamingResponse] = useState('');
   const textareaRef = useRef(null);
   const lastPromptRef = useRef('');
 
@@ -90,6 +92,26 @@ function App() {
     showToast(`Switched to ${newTheme} theme`);
   };
 
+  // Simulate progressive loading for better UX
+  const simulateStreaming = (text) => {
+    setIsStreaming(true);
+    setStreamingResponse('');
+    const words = text.split(' ');
+    let currentIndex = 0;
+    
+    const interval = setInterval(() => {
+      if (currentIndex < words.length) {
+        setStreamingResponse(prev => prev + (prev ? ' ' : '') + words[currentIndex]);
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        setIsStreaming(false);
+        setResponse(text);
+        setStreamingResponse('');
+      }
+    }, 50); // Adjust speed as needed
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -99,6 +121,8 @@ function App() {
     }
 
     setIsLoading(true);
+    setIsStreaming(false);
+    setStreamingResponse('');
     setError('');
     setResponse('');
     const currentPrompt = prompt;
@@ -112,7 +136,13 @@ function App() {
     try {
       const data = await aiService.generateContent(currentPrompt, selectedModel);
       
-      setResponse(data.text);
+      // Use streaming effect for better UX with long responses
+      if (data.text && data.text.length > 200) {
+        simulateStreaming(data.text);
+      } else {
+        setResponse(data.text);
+      }
+      
       saveToHistory(currentPrompt, data.text);
       showToast('Response generated successfully!');
     } catch (err) {
@@ -223,11 +253,16 @@ function App() {
               </div>
             </div>
           </div>
-          <button type="submit" className="generate-button" disabled={isLoading}>
+          <button type="submit" className="generate-button" disabled={isLoading || isStreaming}>
             {isLoading ? (
               <div className="loading-content">
                 <span className="loader"></span>
                 Generating...
+              </div>
+            ) : isStreaming ? (
+              <div className="loading-content">
+                <span className="streaming-indicator">⚡</span>
+                Streaming...
               </div>
             ) : 'SEND'}
           </button>
@@ -249,7 +284,7 @@ function App() {
           </div>
         )}
 
-        {response && (
+        {(response || streamingResponse) && (
           <div className="response-container">
             <div className="response-header">
               <h2>Generated Content</h2>
@@ -258,6 +293,7 @@ function App() {
                   className="action-btn small"
                   onClick={handleCopyResponse}
                   title="Copy to clipboard"
+                  disabled={isStreaming}
                 >
                   📋
                 </button>
@@ -265,15 +301,26 @@ function App() {
                   className="action-btn small"
                   onClick={handleExportResponse}
                   title="Export as text file"
+                  disabled={isStreaming}
                 >
                   💾
                 </button>
               </div>
             </div>
-            <div 
-              className="response-content"
-              dangerouslySetInnerHTML={{ __html: formatResponse(response) }}
-            />
+            <div className="response-content">
+              {isStreaming ? (
+                <div className="streaming-response">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: formatResponse(streamingResponse) }}
+                  />
+                  <span className="streaming-cursor">▌</span>
+                </div>
+              ) : (
+                <div 
+                  dangerouslySetInnerHTML={{ __html: formatResponse(response) }}
+                />
+              )}
+            </div>
           </div>
         )}
       </main>

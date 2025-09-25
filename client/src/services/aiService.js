@@ -10,7 +10,7 @@ const generateContent = async (contents, model = 'gemini-2.5-flash') => {
     const response = await axios.post(`${API_URL}/generate`, 
       { contents, model },
       {
-        timeout: 60000, // 60 second timeout (backend handles retries)
+        timeout: 120000, // Increased to 2 minutes for Gemini 2.5 Pro
         headers: {
           'Content-Type': 'application/json',
         },

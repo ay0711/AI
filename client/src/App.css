@@ -530,6 +530,104 @@ body {
     font-size: 2.4rem;
   }
 
+  .response-content {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+}
+
+/* Streaming Response Effects */
+.streaming-response {
+  position: relative;
+}
+
+.streaming-cursor {
+  color: var(--primary-color);
+  font-weight: bold;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.streaming-indicator {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Optimize for long content */
+.response-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* Streaming Response Effects */
+.streaming-response {
+  position: relative;
+}
+
+.streaming-cursor {
+  color: var(--primary-color);
+  font-weight: bold;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.streaming-indicator {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Optimize for long content */
+.response-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* Performance optimizations */
+.response-container {
+  will-change: transform, opacity;
+  contain: layout;
+}
+
+/* Disabled state for streaming */
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn:disabled:hover {
+  transform: none;
+}
+
+/* Large screens */
+@media (min-width: 1024px) {
+  .app-container {
+    padding: 2.5rem;
+  }
+
+  .app-header h1 {
+    font-size: 2.4rem;
+  }
+
   .app-header p {
     font-size: 1.1rem;
   }
@@ -547,6 +645,9 @@ body {
     padding: 2rem;
     margin-top: 2rem;
   }
+
+  .response-content {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
 }
-
-

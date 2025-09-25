@@ -85,12 +85,10 @@ const generateContent = async (req, res) => {
         }
 
         // Generic error with more details
-        console.error('Unexpected error in generateContent:', error);
         return res.status(500).json({
           success: false,
           error: 'Internal server error',
-          message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
-          ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+          message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
         });
     }
   }

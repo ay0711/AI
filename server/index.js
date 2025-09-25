@@ -11,12 +11,31 @@ const PORT = process.env.PORT || 5000;
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://ai-ten-alpha-19.vercel.app', 'https://ai-k0yd.onrender.com'] // Your deployed frontend and backend
-    : ['http://localhost:5173', 'http://localhost:3000'], // Allow local development
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (process.env.NODE_ENV === 'production') {
+      // Production: Only allow specific domains
+      const allowedOrigins = ['https://ai-ten-alpha-19.vercel.app', 'https://ai-k0yd.onrender.com'];
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      // Development: Allow any localhost port
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow all in development for easier testing
+      }
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
 // Middleware

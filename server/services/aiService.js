@@ -52,8 +52,6 @@ class AIService {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`[DEBUG] Attempting AI generation - Model: ${model}, Attempt: ${attempt}`);
-        
         // Use the new SDK format
         const response = await this.ai.models.generateContent({
           model: model,
@@ -61,13 +59,11 @@ class AIService {
         });
 
         const text = response.text;
-        console.log(`[DEBUG] AI response received, length: ${text?.length || 0}`);
 
         if (!text || text.trim().length === 0) {
           throw new Error("Empty response received from AI model");
         }
 
-        console.log(`[DEBUG] Success on attempt ${attempt}`);
         return {
           text: text.trim(),
           model: model,
@@ -76,7 +72,6 @@ class AIService {
         };
 
       } catch (error) {
-        console.error(`[DEBUG] Attempt ${attempt} failed:`, error.message);
         lastError = error;
 
         // Handle rate limiting
