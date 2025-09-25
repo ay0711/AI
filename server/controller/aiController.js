@@ -1,42 +1,72 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-require('dotenv').config();
+const AIService = require('../services/aiService');
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+// Initialize AI service
+const aiService = new AIService();
 
 const generateContent = async (req, res) => {
   try {
     const { contents, model = 'gemini-1.5-flash' } = req.body;
     
-    // Input validation
-    if (!contents || typeof contents !== 'string' || contents.trim() === '') {
-      return res.status(400).json({ error: 'Contents parameter is required and must be a non-empty string' });
-    }
-
-    // Validate model
-    const validModels = ['gemini-1.5-flash', 'gemini-1.5-pro'];
-    if (!validModels.includes(model)) {
-      return res.status(400).json({ error: 'Invalid model specified' });
-    }
-
-    const modelInstance = genAI.getGenerativeModel({ model });
-    const result = await modelInstance.generateContent(contents);
-    const response = await result.response;
-    const text = response.text();
+    // Use the AI service with integrated retry logic
+    const result = await aiService.generateContent(contents, model);
     
-    res.json({ text });
+    return res.status(200).json({
+      success: true,
+      text: result.text,
+      model: result.model,
+      attempt: result.attempt,
+      timestamp: result.timestamp
+    });
+
   } catch (error) {
-    console.error('Error generating content:', error);
-    
-    // Better error handling
-    if (error.message.includes('API key')) {
-      return res.status(401).json({ error: 'Invalid API key' });
-    }
-    if (error.message.includes('quota')) {
-      return res.status(429).json({ error: 'API quota exceeded' });
-    }
-    
-    res.status(500).json({ error: 'Error generating content' });
-  }
-};
+    // Handle specific error types from AI service
+    switch (error.code) {
+      case 'RATE_LIMIT_EXCEEDED':
+        return res.status(429).json({
+          success: false,
+          error: 'Rate limit exceeded',
+          message: error.message,
+          retryAfter: error.retryAfter || 120
+        });
 
-module.exports = { generateContent };
+      case 'QUOTA_EXCEEDED':
+        return res.status(429).json({
+          success: false,
+          error: 'API quota exceeded',
+          message: error.message
+        });
+
+      case 'AUTH_ERROR':
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication failed',
+          message: error.message
+        });
+
+      case 'GENERATION_FAILED':
+        return res.status(500).json({
+          success: false,
+          error: 'Content generation failed',
+          message: error.message
+        });
+
+      default:
+        // Handle validation errors
+        if (error.message.includes('Invalid model') || 
+            error.message.includes('Contents must be')) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid request',
+            message: error.message
+          });
+        }
+
+        // Generic error
+        return res.status(500).json({
+          success: false,
+          error: 'Internal server error',
+          message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
+  }
+};module.exports = { generateContent };

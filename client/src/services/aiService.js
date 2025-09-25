@@ -1,56 +1,47 @@
 import axios from 'axios';
 
-const API_URL = '/api/ai';
+// Configure API URL based on environment
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://your-backend-domain.com/api/ai'  // Update with your production backend URL
+  : 'http://localhost:5000/api/ai';
 
-// Add retry logic with exponential backoff
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const generateContent = async (contents, model = 'gemini-1.5-flash', maxRetries = 3) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await axios.post(`${API_URL}/generate`, { contents, model }, {
-        timeout: 30000, // 30 second timeout
+const generateContent = async (contents, model = 'gemini-1.5-flash') => {
+  try {
+    const response = await axios.post(`${API_URL}/generate`, 
+      { contents, model },
+      {
+        timeout: 60000, // 60 second timeout (backend handles retries)
         headers: {
           'Content-Type': 'application/json',
         },
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Attempt ${attempt} - Error generating content:`, error);
-      
-      // Better error messaging based on status codes
-      if (error.response) {
-        const { status, data } = error.response;
-        
-        // Handle rate limiting with retry
-        if (status === 429) {
-          if (attempt < maxRetries) {
-            const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
-            console.log(`Rate limited. Retrying in ${waitTime/1000} seconds...`);
-            await delay(waitTime);
-            continue; // Try again
-          } else {
-            throw new Error('Rate limit exceeded. Please wait a few minutes before trying again.');
-          }
-        }
-        
-        switch (status) {
-          case 400:
-            throw new Error(data.error || 'Invalid request');
-          case 401:
-            throw new Error('API key is invalid');
-          case 500:
-            throw new Error('Server error. Please try again later.');
-          default:
-            throw new Error(`Error: ${data.error || 'Something went wrong'}`);
-        }
       }
+    );
+
+    return response.data;
+
+  } catch (error) {
+    if (error.response) {
+      // Backend returned an error response
+      const { status, data } = error.response;
       
-      if (error.request) {
-        throw new Error('Network error. Please check your connection.');
+      switch (status) {
+        case 400:
+          throw new Error(data.message || 'Invalid request');
+        case 401:
+          throw new Error(data.message || 'API authentication failed');
+        case 429:
+          throw new Error(data.message || 'Rate limit exceeded');
+        case 500:
+          throw new Error(data.message || 'Server error');
+        default:
+          throw new Error(data.message || `Request failed with status ${status}`);
       }
-      
-      throw error;
+    } else if (error.request) {
+      // Network error - backend not reachable
+      throw new Error('Cannot connect to backend server. Please check if the server is running.');
+    } else {
+      // Other error
+      throw new Error(error.message || 'An unexpected error occurred');
     }
   }
 };

@@ -24,8 +24,6 @@ function App() {
   const [theme, setCurrentTheme] = useState(getTheme());
   const selectedModel = 'gemini-1.5-flash';
   const [charCount, setCharCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const textareaRef = useRef(null);
   const lastPromptRef = useRef('');
 
@@ -101,8 +99,6 @@ function App() {
     }
 
     setIsLoading(true);
-    setIsRetrying(false);
-    setRetryCount(0);
     setError('');
     setResponse('');
     const currentPrompt = prompt;
@@ -113,30 +109,13 @@ function App() {
       textareaRef.current.style.height = 'auto';
     }
 
-    // Store original console.log outside try block
-    const originalConsoleLog = console.log;
-    
     try {
-      // Add retry monitoring
-      console.log = (message) => {
-        if (message.includes('Rate limited. Retrying')) {
-          setIsRetrying(true);
-          const match = message.match(/Retrying in (\d+) seconds/);
-          if (match) {
-            setRetryCount(prev => prev + 1);
-            showToast(`Rate limited. Retrying in ${match[1]} seconds... (Attempt ${retryCount + 1})`, 'info');
-          }
-        }
-        originalConsoleLog(message);
-      };
-
       const data = await aiService.generateContent(currentPrompt, selectedModel);
       
       setResponse(data.text);
       saveToHistory(currentPrompt, data.text);
       showToast('Response generated successfully!');
     } catch (err) {
-      
       setError(err.message || 'Failed to generate content. Please try again.');
       setPrompt(currentPrompt); // Restore prompt on error
       setCharCount(currentPrompt.length);
@@ -149,11 +128,7 @@ function App() {
         showToast('Failed to generate response', 'error');
       }
     } finally {
-      // Always restore console.log
-      console.log = originalConsoleLog;
       setIsLoading(false);
-      setIsRetrying(false);
-      setRetryCount(0);
     }
   };
 
@@ -252,7 +227,7 @@ function App() {
             {isLoading ? (
               <div className="loading-content">
                 <span className="loader"></span>
-                {isRetrying ? `Retrying... (${retryCount}/3)` : 'Generating...'}
+                Generating...
               </div>
             ) : 'SEND'}
           </button>
