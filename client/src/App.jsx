@@ -22,7 +22,7 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [theme, setCurrentTheme] = useState(getTheme());
-  const selectedModel = 'gemini-1.5-flash-latest';
+  const selectedModel = 'gemini-2.5-flash';
   const [charCount, setCharCount] = useState(0);
   const textareaRef = useRef(null);
   const lastPromptRef = useRef('');

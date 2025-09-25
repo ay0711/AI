@@ -1,12 +1,19 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 
 class AIService {
   constructor() {
     if (!process.env.GOOGLE_AI_API_KEY) {
       throw new Error("GOOGLE_AI_API_KEY environment variable is required");
     }
-    this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-    this.validModels = ["gemini-1.5-flash-latest", "gemini-1.5-pro-latest"];
+    this.ai = new GoogleGenAI({
+      apiKey: process.env.GOOGLE_AI_API_KEY
+    });
+    // Use the correct model names for the new SDK
+    this.validModels = [
+      "gemini-2.5-flash", 
+      "gemini-1.5-flash",
+      "gemini-1.5-pro"
+    ];
   }
 
   // Helper function for delays
@@ -19,8 +26,20 @@ class AIService {
     return this.validModels.includes(model);
   }
 
+  // List available models for debugging
+  async listAvailableModels() {
+    try {
+      // This method might not be available in the new SDK
+      console.log('[DEBUG] Valid models for this SDK:', this.validModels);
+      return this.validModels.map(name => ({ name }));
+    } catch (error) {
+      console.error('[DEBUG] Error listing models:', error.message);
+      return [];
+    }
+  }
+
   // Generate content with retry logic
-  async generateContent(contents, model = "gemini-1.5-flash-latest", maxRetries = 3) {
+  async generateContent(contents, model = "gemini-2.5-flash", maxRetries = 3) {
     if (!this.isValidModel(model)) {
       throw new Error(`Invalid model. Supported models: ${this.validModels.join(", ")}`);
     }
@@ -29,19 +48,26 @@ class AIService {
       throw new Error("Contents must be a non-empty string");
     }
 
-    const aiModel = this.genAI.getGenerativeModel({ model });
     let lastError = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const result = await aiModel.generateContent(contents.trim());
-        const response = await result.response;
-        const text = response.text();
+        console.log(`[DEBUG] Attempting AI generation - Model: ${model}, Attempt: ${attempt}`);
+        
+        // Use the new SDK format
+        const response = await this.ai.models.generateContent({
+          model: model,
+          contents: contents.trim()
+        });
+
+        const text = response.text;
+        console.log(`[DEBUG] AI response received, length: ${text?.length || 0}`);
 
         if (!text || text.trim().length === 0) {
           throw new Error("Empty response received from AI model");
         }
 
+        console.log(`[DEBUG] Success on attempt ${attempt}`);
         return {
           text: text.trim(),
           model: model,
@@ -50,6 +76,7 @@ class AIService {
         };
 
       } catch (error) {
+        console.error(`[DEBUG] Attempt ${attempt} failed:`, error.message);
         lastError = error;
 
         // Handle rate limiting
